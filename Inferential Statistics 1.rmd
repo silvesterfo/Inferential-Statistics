@@ -1,0 +1,574 @@
+---
+title: "Tutorial 1 - Introduction to R"
+author: "Sven Klaaßen"
+fontsize: 11pt
+output:
+  html_document:
+    df_print: paged
+    toc: yes
+    toc_depth: '2'
+    number_sections: true
+    theme: cosmo
+  pdf_document: 
+    toc: yes
+    toc_depth: '2'
+    keep_tex:  true
+---
+<style>
+body {text-align: justify}
+</style>
+---
+
+# Preliminaries
+
+This is a short introduction/reminder into the basics of R. We will have a look at the syntax, some basic objects and functions of R. R is a powerful programming language and environment primarily designed for statistical computing and graphics. It is widely employed by statisticians and data analysts for tasks such as data analysis and visualization. As an open-source language, R has a large community. If you encounter a problem, there's a high chance someone has already solved it. Google and ChatGPT can be very helpful.
+
+Rather than rewriting your code every time, save it in an R script file. In RStudio, you can run the code from the Script Editor by clicking the Run button or using the keyboard shortcuts (e.g., Ctrl+Enter on Windows/Linux or Cmd+Enter on Mac).
+
+Instead of writing every function from scratch, we often rely on pre-made functions and datasets provided by others. To access these resources, you first install the corresponding package using `install.packages("package_name")`. Once installed, you load the package into your R session with `library(package_name)`.
+
+```{r eval=FALSE}
+install.packages("rmarkdown")
+install.packages("formatR")
+install.packages("caTools")
+install.packages("knitr")
+library(rmarkdown)
+library(formatR)
+library(caTools)
+library(knitr)
+```
+
+Especially in the beginning a very useful function is the help. The function provides access to the documentation for any given function. You can open it in R by typing **help(???)**.
+
+```{r warning=FALSE, error=TRUE}
+# Call the help page of the command help
+help(help)
+```
+
+Note that the \# can be used in R scripts to make comments. Comments are just for the reader of the code and will not be executed by R. A good program should include comments where the code is explained. This is not only important for other users of your code but also for yourself because projects might become fairly large or you might work a long time on a given project.
+
+
+# Numbers, vectors and basic functions
+Of course R could be used as an (advanced) pocket calculator by using the operator **"+"**, **"-"**, **"$\mathbf{\cdot}$"** or **"/"**. You can store the results in variables. The name of the variable is always on the left, the statement you would like to save on the right. We use **"="** or **"<-"** to assign something to a variable name. Note that there are certain rules for variable names: It has to begin with a letter, special characters are (mostly) not allowed and certain names as *TRUE* or *FALSE* are reserved for R commands or functions. If you use the same name for a variable twice you overwrite the content of the former.  
+
+
+```{r warning=FALSE, error=TRUE}
+x = 3
+x
+
+y = x
+y
+
+x = 5
+x = x^2
+x
+
+z = x*y
+z
+
+
+
+```
+
+R provides several basic data structures that are essential for data analysis. 
+
+**Vectors:**  
+A vector is a one-dimensional sequence of elements, all of the same type (numeric, character, or logical).  
+
+
+```{r warning=FALSE, error=TRUE}
+  numeric_vec = c(1, 2, 3, 4, 5)
+  char_vec = c("apple", "banana", "cherry")
+  logical_vec = c(TRUE, FALSE, TRUE)
+```
+
+**Matrices:**
+A matrix is a two-dimensional array where all elements are of the same type.
+
+```{r warning=FALSE, error=TRUE}
+  A = matrix(1:9, nrow = 3)
+```
+
+
+**Data Frames:**
+A data frame is like a table or a spreadsheet; it is a two-dimensional structure where each column can contain different types of data.
+
+
+```{r warning=FALSE, error=TRUE}
+  df = data.frame(
+  ID = 1:3,
+  Name = c("Alice", "Bob", "Charlie"),
+  Score = c(90, 85, 88)
+)
+```
+
+**Lists:**
+A list is a flexible container that can hold elements of different types, including other lists.
+
+
+```{r warning=FALSE, error=TRUE}
+L = list(
+  numbers = 1:5,
+  words = c("hello", "world"),
+  data = df
+)
+```
+
+**Factors:**
+Factors are used to represent categorical data. They store a vector of values along with a set of levels.
+
+```{r warning=FALSE, error=TRUE}
+grades = factor(c("low", "medium", "high", "medium", "low"))
+```
+
+
+For now, we will take a closer look at vectors. A vector can be easily constructed using the **c(???)** function.
+
+```{r warning=FALSE, error=TRUE}
+vec = c(3, 5, 7, 9, 11, 13, 15)
+vec
+```
+
+Sometimes this takes time to type out therefore another useful function to create a vector based on a certain pattern is **seq(???)**. Any function in R has a name - e.g. **"seq"** - and round brackets **"()"**, pretty much like in mathematics. The *???* are called arguments. If you have a look at the help page of the function **seq()**
+
+```{r warning=FALSE, error=TRUE}
+help(seq)
+```
+
+
+```{r warning=FALSE, error=TRUE}
+vec2 = seq(3, 15, 2)
+vec2
+```
+
+Most arguments of any function have a name. It is good practice to specify the name of the argument you would like to use. The order of the arguments matter, e.g. for the function **seq()** the first argument *from* is the starting point, the second one *to* the end point of the sequence. Arguments are always separated by a comma. You will also notice that the argument *from* has a so called default value (which is 1 in this case). This implies if you do not specify this argument it will take the value 1. 
+
+```{r warning=FALSE, error=TRUE}
+s = seq(from = 1, to = 10, length.out = 10)
+s
+```
+
+
+A very important difference to some other programming languages is that R will manipulate (numeric) vectors element wise. For example the scalar product of two vectors a and b of the same length *<a,b>* is typically *ab* but not in R!
+
+```{r warning=FALSE, error=TRUE}
+a = c(1,2,3,4)
+b = c(5,6,7,8)
+a*b           # elementwise
+a%*%b         # scalar product
+```
+
+In some applications this is very useful in other applications you really have to think hard how to translate element wise manipulations of a vector to your desired outcome. If you multiply (divide, ...) vectors of different length the shorter vector will be recycled automatically. Note that if the length of the shorter is an exact multiple of the larger vector you will not even get an error message, otherwise only a warning.  
+
+Sometimes you may be interested in certain subsets of a given vector. In R this is possible by specifying the name and the index number of the elements you are interested in, e.g. *vec[1:3]* which extracts the first three elements of the vector vec. 
+
+```{r warning=FALSE, error=TRUE}
+vec[1:3]
+vec[c(2:5,7)]
+```
+
+Notice that if you would like to obtain elements of a vector (or later any data structure) you have to use rectangular brackets **"[]"**, if you would like to call a function always round brackets **"()"**. You can exclude certain elements of a vector with a minus, e.g. *vec[-(2:5)]*.
+
+
+# Loops
+Whenever something has to be repetitively executed the most basic procedure to solve such a task is a so called *loop*. Loops allow us to execute code repeatedly, which helps avoid copying similar code multiple times. In R two basic types of loops exist: 1. the so called *"for"* loop and 2. the *"while"* loop (to be more precise there exist a third option: repeat loop, but this behaves pretty much like the while loop). The *"for"* loop iterates over each element of a sequence or vector, executing a block of code for each element.
+
+Suppose that we want to calculate the sum of the variable s from earlier without using the *sum()* function. We need at first some condition based on an index (in our example called i) how often (and for which 'values') something has to be calculated. Since we want to calculate the sum of s we start with the first element s[1] and end with the last one, therefore we used the *length()* function. After each step the index is increased by 1.
+
+```{r warning=FALSE, error=TRUE}
+s = vec
+
+sum = 0
+for(i in 1:length(s)){
+  sum=sum+s[i]
+}
+sum
+```
+  
+
+The second type of loops are the so called *while* loops. The syntax is similar to the *for* loop with a main difference. The statement within the **{}**-brackets is executed as long as the condition in the round brackets **()** is true! This yields a major problem because if the condition is always true, the while loop will never stop (infinite loop). 
+
+```{r warning=FALSE, error=TRUE}
+i = 1
+sum = 0
+while(i<=length(s)){
+  sum = sum + s[i]
+  i = i+1
+}
+sum
+```
+
+To ensure that the while loop will stop we have to increase the index i within the loop.  
+
+Loops are relatively easy to use, unfortunately they are relatively slow. If you are running for example larger simulations it might pay off to use vectorized commands or functions instead of loops to save a lot of computation time. 
+
+
+# Writing functions
+
+R is a functional language, meaning almost everything is a function (apart from the data itself). It is recommended to adopt this mindset when solving tasks in R. Instead of writing one large procedure for data analysis or simulation, break the task into smaller, manageable parts and write a separate function for each sub-task. These functions can then build on one another, making your code more modular, maintainable, and easier to debug.
+
+You need several things to define a function. A name, some arguments or variables that the function may use and of course a procedure. The syntax is as follows:
+
+```{r warning=FALSE, error=TRUE}
+name = function(argument1, argument2, argument3 = a,...){
+  procedure
+  return(result)
+}
+```
+
+Note that the third argument has a default value, i.e. a value which is used whenever nothing is specified for this argument by the user. 
+
+Here is an example of a function that calculates the mean of any numerical vector.
+
+```{r warning=FALSE, error=TRUE}
+our_mean = function(x){
+  result = sum(x)/length(x)
+  return(result)
+}
+
+our_mean(a)
+identical(our_mean(a), mean(a))
+```
+
+We calculated the mean by summing up all elements of the variable a and divide the sum by the number of elements. Note that we used only one argument x. The variable x is called a local variable because it exists only in our function but not in any other environment (have a look at the upper right)! Local variables are "forgotten" whenever the procedure was executed. Sometimes one uses the same names for local and global variables or arguments. You need to be able to distinguish between them. In fact whenever you write a program you will not use the console. Instead use scripts! Scripts are text files which will be executed by pressing the run button (you have to save them first). Alternatively you may use such a notebook file which combines to some extend text, R commands and results/output.  
+
+
+# Working with a data set
+
+Next, we want to load the package 'MASS' and use its dataset named 'Boston'. We then store this dataset in the variable Bost.
+
+```{r warning=FALSE, error=TRUE}
+library(MASS)
+Bost = Boston
+```
+
+The View() function opens the specified data object in a spreadsheet-like, interactive window, making it easier to explore and inspect the data visually.
+
+```{r warning=FALSE, error=TRUE}
+View(Bost)
+```
+
+The names() function is used to retrieve or set the names of an object, such as the column names of a data frame or the names of elements in a list or vector.
+
+```{r warning=FALSE, error=TRUE}
+names(Bost)
+```
+
+"summary" computes descriptive statistics and frequencies of a given dataset.
+
+```{r warning=FALSE, error=TRUE}
+summary(Bost)
+```
+
+We can calculate the mean, variance, range, and the 25% and 75% quantiles for the first variable as:
+
+```{r warning=FALSE, error=TRUE}
+mean(Bost[,1])
+var(Bost[,1])
+range(Bost[,1])
+quantile(Bost[,1])
+boxplot(Bost[,1])
+```
+
+We suspect that the variables 'tax' and 'indus' are correlated. We can display the correlation coefficient matrix to find out whether this may be the case.
+
+```{r warning=FALSE, error=TRUE}
+cor(Bost$tax, Bost$indus)
+```
+
+Next we draw a scatter plot to show graphically this relationship, label the x-axis by 'industry', the y-axis by 'tax'.
+
+```{r warning=FALSE, error=TRUE}
+plot(Bost$indus, Bost$tax, xlab = 'industry', ylab = 'tax')
+```
+
+We can also regress 'tax' on 'indus' by OLS with **lm(???)**. 
+
+```{r warning=FALSE, error=TRUE}
+result = lm(tax ~ indus, data = Bost)
+```
+
+We can use the summary command from before to summarize the result of te above regression. 
+
+```{r warning=FALSE, error=TRUE}
+summary(result)
+```
+
+Finally, we can plot the estimated line and the scatter plot in the same figure
+
+```{r warning=FALSE, error=TRUE}
+x = seq(min(Bost[,"indus"]), max(Bost[,"indus"]), by = 0.05)
+y = result$coefficients[1] + result$coefficients[2]*x
+plot(Bost[,'indus'], Bost[,'tax'], xlim = range(Bost[,'indus']), ylim = range(Bost[,'tax']), xlab = 'industry', ylab = 'tax')
+lines(x, y, lwd = 2, col = "blue")
+```
+
+
+# Simulations
+First, we have to draw a sample of some random numbers. We will start with 10 values of the standard normal distribution.
+By setting a **seed** you'll get always the same random numbers. This is useful for comparing results.
+
+```{r warning=FALSE, error=TRUE}
+set.seed(123)                   
+x = rnorm(10, mean = 0, sd = 1)
+x
+```
+
+Assume we are interested in the distribution of the t-test statistic. Set up a model - with 100 observations - which we can estimate via OLS. Define x as a uniform and u as a normal distributed random variable.
+
+```{r warning=FALSE, error=TRUE}
+x = runif(100)
+u = rnorm(100, sd = 2)
+y = 1 + 2*x + u
+```
+
+Now estimate this model via OLS:
+
+```{r warning=FALSE, error=TRUE}
+estim = lm(y~x)
+coeff = estim$coefficients
+covariance = vcov(estim)
+```
+
+Construct the t-test statistic for testing the second parameter in our model whether it is 2: 
+
+```{r warning=FALSE, error=TRUE}
+t = (coeff[2]-2)/sqrt(covariance[2,2])
+```
+
+Unfortunately this is only one value for the test statistic. If we would like to obtain the empirical distribution, we have to repeat this procedure a couple of times. To do this we write a function that simulates and estimates a model and returns the test statistic (for the second parameter):
+
+```{r warning=FALSE, error=TRUE}
+statistic = function(){
+  x = runif(100)
+  u = rnorm(100, sd = 2)
+  y = 1 + 2*x + u
+  estim = lm(y~x)
+  coeff = estim$coefficients
+  covariance = vcov(estim)
+  t = (coeff[2]-2)/sqrt(covariance[2,2])
+  return(t)
+}
+```
+
+Now we can use this function for the construction of a sequence of test statistics
+
+```{r warning=FALSE, error=TRUE}
+set.seed(123)
+N_MC = 1000 # number of replications in the simulation
+simulation = replicate(N_MC, statistic())
+```
+
+We can use this sequence to plot the empirical distribution and compare this against the theoretical distribution:
+
+```{r warning=FALSE, error=TRUE}
+# empirical:
+hist(simulation, breaks = 40, probability = T, xlab = "t statistic")
+
+# theoretical:
+x = seq(-5, 5, length.out = 10000)
+y = dnorm(x, sd = 1)
+lines(x, y, col = "green", lwd = 2)
+box()
+```
+
+# Homework
+
+1. Create two numeric vectors named x and y containing numbers 1 to 5
+
+```{r warning=FALSE, error=TRUE}
+x = c(1:5)
+y = seq(1,5)
+x
+y
+
+```
+
+
+2. Calculate the elementwise product of x and y.
+
+
+```{r warning=FALSE, error=TRUE}
+x * y
+
+```
+
+
+3. Define a 3×3 matrix A with entries from 1 to 9 and a 3×3 matrix B with entries from 10 to 18. You may use the **matrix(???)** command.
+
+
+```{r warning=FALSE, error=TRUE}
+A = matrix(1:9,  nrow = 3, byrow = TRUE)
+B = matrix(10:18, nrow = 3, byrow = TRUE)
+```
+
+
+4. Multiply A by its transpose t(A) . 
+
+
+```{r warning=FALSE, error=TRUE}
+A %*% t(A)
+
+```
+
+
+
+5. Write functions to calculate:
+
+- The sum of each row in a matrix
+
+- The sum of each column in a matrix
+
+- The overall mean of all elements in a matrix
+
+Test your function on matrices A and B
+
+
+```{r warning=FALSE, error=TRUE}
+
+row_sum = function(mat) {
+  nr = nrow(mat)
+  res = numeric(nr) # Create empty vector of length nr to fill up
+  for (i in seq_len(nr)) {
+    s = 0
+    for (j in seq_len(ncol(mat))) {
+      s = s + mat[i, j]
+    }
+    res[i] = s
+  }
+  res
+}
+
+col_sum = function(mat) {
+  nc = ncol(mat)
+  res = numeric(nc)
+  for (j in seq_len(nc)) {
+    s = 0
+    for (i in seq_len(nrow(mat))) {
+      s = s + mat[i, j]
+    }
+    res[j] = s
+  }
+  res
+}
+
+overall_mean = function(mat) {
+  total = 0
+  nr = nrow(mat)
+  nc = ncol(mat)
+  for (i in seq_len(nr)) {
+    for (j in seq_len(nc)) {
+      total = total + mat[i, j]
+    }
+  }
+  total / (nr * nc)
+}
+
+# Test on A and B
+A <- matrix(1:9, 3, 3)
+B <- matrix(10:18, 3, 3)
+
+row_sum(A)
+col_sum(A)
+overall_mean(A)
+
+row_sum(B)
+col_sum(B)
+overall_mean(B)
+
+```
+
+
+
+6. Write a function named trace_matrix that computes the trace (i.e., the sum of diagonal elements) of any square matrix. Test your function on matrices A and B
+
+
+```{r warning=FALSE, error=TRUE}
+
+trace_matrix = function(mat) {
+  n = nrow(mat)
+  tr = 0
+  for (i in seq_len(n)) {
+    tr = tr + mat[i, i]
+  }
+  tr
+}
+
+# Test on A and B
+A <- matrix(1:9, 3, 3)
+B <- matrix(10:18, 3, 3)
+
+trace_matrix(A)
+trace_matrix(B)
+
+```
+
+
+7. Write a loop-based function that computes the cumulative product of a numeric vector. Use vector x to test your function and compare its output to that of the built-in cumprod().
+
+
+```{r warning=FALSE, error=TRUE}
+cumprod_loop = function(v) {
+  n = length(v)
+  out = numeric(n) # Create empty vector to store cumulative products
+  p = 1
+  for (i in seq_len(n)) {
+    p = p * v[i]
+    out[i] = p
+  }
+  out
+}
+
+# Test on x
+cumprod_loop(x)
+cumprod(x)  # built‐in function
+
+```
+
+
+8. Write a function that takes two numeric vectors of the same length and returns a new vector containing, for each position, the maximum value of the corresponding elements. Use the vectors x and y to test your function.
+
+
+```{r warning=FALSE, error=TRUE}
+
+max_vector_1 = function(a, b) {
+  result = numeric(length(a))
+  for (i in a) {
+    if (a[i] >= b[i]) {
+      result[i] <- a[i]
+    } else {
+      result[i] <- b[i]
+    }
+  }
+  result
+}
+
+
+# Alternatively, we can use sapply(). sapply() takes a vector (or list) and applies 
+# a given function to each element, simplifying the result to a vector (or list).
+max_vector_2 = function(a, b) {
+  sapply(a, function(i) max(a[i], b[i]))
+}
+
+# Test on x and y
+max_vector_1(x, y)
+max_vector_2(x, y)
+pmax(x, y)  # built‐in function
+
+```
+
+
+9. Write a function that takes a numeric vector as input and returns a normalized version (subtract the mean and divide by the standard deviation). Apply your function to a variable from the Boston dataset (e.g., medv) and compare its histogram to that of the original variable.
+
+
+```{r warning=FALSE, error=TRUE}
+
+normalize <- function(v) (v - mean(v)) / sd(v)
+norm_medv <- normalize(Bost$medv)
+
+par(mfrow = c(1, 2))
+hist(Bost$medv, main = "Original medv", xlab = "medv")
+hist(norm_medv, main = "Normalized medv", xlab = "(medv - mean)/sd")
+par(mfrow = c(1, 1))
+
+```

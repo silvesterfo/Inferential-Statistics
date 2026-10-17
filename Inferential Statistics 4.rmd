@@ -1,0 +1,294 @@
+---
+title: "Tutorial 4"
+author: "Trong Dat Nguyen"
+output:
+  pdf_document: default
+  html_document:
+    df_print: paged
+    theme: cosmo
+---
+
+```{=html}
+<style>
+body {text-align: justify}
+</style>
+```
+
+------------------------------------------------------------------------
+
+# Problem 1
+
+Let $X_i \sim \Gamma(\alpha, \beta=1)$. We are interested in estimating $\alpha$ via **LS**, **ML** and **(G)MM**.\
+The log-likelihood is given by $\ln(f_\Gamma(x)) = -\alpha n\ln(\beta)-n\ln(\Gamma(\alpha)) + (\alpha-1)\sum_{i=1}^n \ln(x_i)-\frac{1}{\beta}\sum_{i=1}^nx_i$
+
+Implement the log-likelihood as a function in R:
+
+```{r warning=FALSE, error=TRUE}
+log.gamma = function(x, alpha){
+  n = length(x)
+  ll = - n*lgamma(alpha) + (alpha-1)*sum(log(x))-sum(x)
+  return(ll)
+}
+```
+
+For the **GMM** method we need certain moment conditions, we will use the first two noncentral moments. Thus the moment conditions are defined as $m1 = x - \alpha\beta$ and $m2 = x^2 -\alpha\beta^2(\alpha+1)$
+
+Implement those as a function in R.
+
+```{r warning=FALSE, error=TRUE}
+moments.gamma = function(alpha, x){
+  m1 = x - alpha
+  m2 = x^2 - alpha*(alpha+1)
+  return(cbind(m1, m2))
+}
+```
+
+Write a function that estimates $\alpha$ by means of **LS** and returns the estimated quantity.
+
+**Hint:** *Use the function lm() and just a constant as regressor.*
+
+```{r warning=FALSE, error=TRUE}
+ls.fit = function(sample){
+  coeff = lm(sample ~ 1)$coefficients
+  names(coeff) = "alpha"
+  return(coeff)
+}
+```
+
+Write a function for the **ML** estimator with the use of the function *optimize()*:
+
+```{r warning=FALSE, error=TRUE}
+ml.fit = function(sample){
+  coeff = optimize(f = log.gamma, lower = 0.01, upper = 10000, x = sample, maximum = T)$maximum
+  names(coeff) = "alpha"
+  return(coeff)
+}
+```
+
+To estimate $\alpha$ by **GMM** we will use the ***GMM-package***. Write a function with the use of the function *gmm()* with the moments conditions above to estimate $\alpha$:
+
+```{r warning=FALSE, error=TRUE}
+gmm.fit = function(moments, sample){
+  coeff = gmm(g = moments, x = sample, t0 = 0, optfct = "optimize", lower = 0.01, upper = 10000)$coefficients
+  names(coeff) = "alpha"
+  return(coeff)
+}
+```
+
+Construct a sample of size 100 to estimate $\alpha$ via **LS**, **ML** and **GMM** with the previously defined functions.
+
+Set parameters and draw sample:
+
+```{r warning=FALSE, error=TRUE}
+library('gmm')
+# Parameter
+n     = 100
+alpha = 5
+
+# Sample
+set.seed(123)
+sample = rgamma(n, shape = alpha, rate = 1)
+```
+
+Estimate $\alpha$:
+
+```{r warning=FALSE, error=TRUE}
+ls.fit(sample)
+ml.fit(sample)
+gmm.fit(moments.gamma, sample)
+```
+
+Which estimator delivers the most accurate guess?
+
+```{r warning=FALSE, error=TRUE}
+# The closer our estimate, the more accuracy
+```
+
+# Problem 2
+
+Assume a random sample from a logistic distribution, where the pdf is defined by
+
+$$f(x; m,s) =\frac{\exp\left(-\frac{x-m}{s}\right)}{s\left(1+\exp\left(-\frac{x-m}{s}\right)\right)^2}$$
+
+with moments $E(X)=m$ and $Var(X)=\frac{s^2\pi^2}{3}$. Interest lies on estimating m and s jointly.
+
+The log-likelihood function is given by $\ln(f(m,s; \underline{x})) = -\sum_{i=1}^n \frac{x_i-m}{s}-n\ln(s)-2\sum_{i=1}^n\ln\left(1+\exp\left(-\frac{x_i-m}{s}\right)\right)$
+
+Implement this function in R.
+
+```{r warning=FALSE, error=TRUE}
+log.logistic = function(param, x){
+  m = param[1]
+  s = param[2]
+  ll = -sum((x-m)/s)-length(x)*log(s)-2*sum(log(1+exp(-(x-m)/s)))
+  return(ll)
+}
+```
+
+Use the first non-central and second central moments as moment conditions.
+
+(Recall the moments $E(X)=m$ and $Var(X)=\frac{s^2\pi^2}{3}$)
+
+Implement these as a function in R.
+
+```{r warning=FALSE, error=TRUE}
+moments.logistic = function(param, x){
+  m = param[1]
+  s = param[2]
+  m1 = x - m
+  m2 = (x-m)^2 - s^2*pi^2/3
+  return(cbind(m1, m2)) 
+}
+```
+
+Write a function to estimate the two parameters by **LS**. This function should return a named vector.
+
+```{r warning=FALSE, error=TRUE}
+ls.fit = function(x){
+  fit = lm(x ~ 1)
+  m = fit$coefficients
+  s = sd(fit$residuals)*sqrt(3)/pi
+  theta = c(m, s)
+  names(theta) = c("m", "s")
+  return(theta)
+}
+```
+
+Write a function that returns the **ML** estimates for $m$ and $s$ as a named vector (same names as before).
+
+**Hint:** *Use the function optim() for this purpose.*
+
+```{r warning=FALSE, error=TRUE}
+ml.fit = function(x){
+  fit = optim(par = c(0,1), fn = log.logistic, x = x, control = list(fnscale = -1))$par
+  names(fit) = c("m", "s")
+  return(fit)
+}
+```
+
+Lastly write a function that returns the **GMM** estimates as a named vector (again, same names as before). Make use of your moment function and the gmm package.
+
+```{r warning=FALSE, error=TRUE}
+gmm.fit = function(moments, x){
+  fit = gmm(g = moments, x=x, t0 = c(0,1), optfct = 'optim')$coefficients
+  names(fit) = c('m', 's')
+  return(fit)
+}
+```
+
+Construct a sample and estimate based on this sample $m$ and $s$ by **LS**, **ML** and **GMM**. What can you say about the performance of these estimators?
+
+**Hint:** *You can draw random numbers from a logistic distribution with rlogis()*
+
+Set parameters and draw sample:
+
+```{r warning=FALSE, error=TRUE}
+# Parameter
+param  = c(5, 2)
+  
+# Sample
+set.seed(123)
+sample = rlogis(n, location = param[1], scale = param[2])
+```
+
+Estimate $m$ and $s$:
+
+```{r warning=FALSE, error=TRUE}
+ls.fit(sample)
+ml.fit(sample)
+gmm.fit(moments.logistic,sample)
+```
+
+Finally compare the performance of these estimators by MSE *(for each parameter separately, i.e. MSE for m and MSE for s)*. Additionally estimate the time for running each simulation with the help of the function *proc.time()*. Considering your simulation result as well as computation time which estimator would you prefer? Why? Explain shortly!
+
+**Hint:** *You might find the function rowMeans() helpful.*
+
+```{r warning=FALSE, error=TRUE}
+# Parameter
+N_MC = 1000
+set.seed(123)
+
+# Estimates
+start = proc.time()
+ls.results =  replicate(N_MC, ls.fit(rlogis(n, location = param[1], scale = param[2])))
+MSE_ls = rowMeans((ls.results- param)^2)
+MSE_ls
+proc.time() - start
+  
+start = proc.time()
+ml.results = replicate(N_MC, ml.fit(rlogis(n, location = param[1], scale = param[2])))
+MSE_ml = rowMeans((ml.results- param)^2)
+MSE_ml
+proc.time() - start
+  
+start = proc.time()
+gmm.results = replicate(N_MC, gmm.fit(moments.logistic, rlogis(n, location = param[1], scale = param[2])))
+MSE_gmm = rowMeans((gmm.results- param)^2)
+MSE_gmm
+proc.time() - start
+
+# ML shows to have lowest MSE in both m and s estimates. GMM is the worst for m estimate, but estimate for s is relatively close for all 3 methods. In terms of computation time, LS is the most speedy, but not much different from ML. Thus in general, one can choose ML with more accuracy and just quite a bit more time of computaion.
+```
+
+# Problem 3 (own work)
+
+Let $X_i\sim \mathrm{Beta}(a,b)$. We are interested in estimating $a$ and $b$ via **ML** and **GMM**. The log‐likelihood is given by $\ln(f_{Beta}(x)) = -\,n\bigl[\ln\Gamma(a) + \ln\Gamma(b) - \ln\Gamma(a+b)\bigr] + (a-1)\sum_{i=1}^n \ln(x_i) + (b-1)\sum_{i=1}^n \ln(1 - x_i)$
+
+Implement the log-likelihood as a function in R:
+
+```{r warning=FALSE, error=TRUE}
+log.beta = function(x, param){
+  a = param[1]
+  b = param[2]
+  n = length(x)
+  const = n*(lgamma(a+b) - lgamma(a) - lgamma(b))
+  ll = const + (a-1)*sum(log(x)) + (b-1)*sum(log(1-x))
+  return(ll)
+}
+```
+
+Use the first non-central and second non-central moments as moment conditions. Implement these as a function in R.
+
+**Hint:** $E(x) = \frac{a}{a+b}$ and $E(x^2) = \frac{a(a+1)}{(a+b)(a+b+1)}$.
+
+```{r warning=FALSE, error=TRUE}
+moments.beta = function(param, sample){
+    a = param[1]
+  b = param[2]
+  m1 = sample - a/(a+b)
+  m2 = sample^2 - (a*(a+1))/((a + b)*(a + b + 1))
+  return(cbind(m1, m2))
+}
+```
+
+Write functions that estimates $a$ and $b$ by means of **ML** and **GMM**.
+
+```{r warning=FALSE, error=TRUE}
+ml.fit = function(x){
+  fit = optim(par = c(1,1), fn = log.beta, x = x, control = list(fnscale = -1))$par
+  names(fit) = c("a", "b")
+  return(fit)
+}
+
+gmm.fit = function(moments, sample){
+  fit = gmm(g = moments, x=sample, t0 = c(1,1), optfct = 'optim', lower = 0.01, upper = 10000)$coefficients
+  names(fit) = c('a', 'b')
+  return(fit)
+}
+```
+
+Estimate $a$ and $b$. Which method works best?
+
+```{r warning=FALSE, error=TRUE}
+# Parameter
+param  = c(1, 3)
+seed  = 123
+n     = 200
+
+# Sample
+set.seed(123)
+sample = rbeta(n, param[1], param[2])
+
+ml.fit(sample)
+gmm.fit(moments.beta,sample)
+```
